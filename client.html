@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Cliente</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="logo"></span><span>Otaku Fit</span></a>
+    <nav class="nav-links">
+      <a class="chip" href="client.html">Mi Panel</a>
+      <a class="chip" href="#" id="logout">Salir</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container section">
+  <h2>Mi Panel</h2>
+  <p class="sub" id="hello">—</p>
+
+  <section class="card pad">
+    <h3 class="card-title">Mi rutina</h3>
+    <div id="routineView" class="notice">Cargando rutina...</div>
+  </section>
+
+  <div style="height:14px"></div>
+
+  <section class="card pad">
+    <h3 class="card-title">Peso corporal (semanal en ayunas)</h3>
+    <form id="bwForm" class="form">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div><label>Fecha</label><input name="date" type="date" required /></div>
+        <div><label>Peso (kg)</label><input name="kg" type="number" step="0.1" required /></div>
+      </div>
+      <button class="btn primary" type="submit">Guardar</button>
+      <div class="notice" id="bwNotice">—</div>
+    </form>
+  </section>
+
+  <div style="height:14px"></div>
+
+  <section class="card pad">
+    <h3 class="card-title">Registrar entreno</h3>
+    <p class="small">Registra ejercicios y sets con kg/reps/RIR.</p>
+
+    <form id="workoutForm" class="form">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div><label>Fecha</label><input name="date" type="date" required /></div>
+        <div><label>Día (nombre)</label><input name="dayName" placeholder="Lunes" required /></div>
+      </div>
+
+      <div><label>Ejercicio</label><input id="exName" placeholder="Press banca" /></div>
+
+      <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:10px;">
+        <div><label>Kg</label><input id="setKg" type="number" step="0.5" value="60"></div>
+        <div><label>Reps</label><input id="setReps" type="number" value="8"></div>
+        <div><label>RIR</label><input id="setRir" type="number" step="0.5" value="2"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" type="button" id="btnAddSet">Añadir set</button>
+        <button class="btn" type="button" id="btnFinishExercise">Guardar ejercicio</button>
+      </div>
+
+      <div class="notice" id="workoutNotice">Ejercicios en este entreno: 0</div>
+      <div id="workoutPreview" class="small"></div>
+
+      <button class="btn primary" type="submit">Guardar entreno</button>
+      <div class="notice" id="saveNotice">—</div>
+    </form>
+  </section>
+</main>
+
+<script type="module">
+  import { auth, db } from "./js/firebase.js";
+  import { requireUser } from "./js/appAuth.js";
+  import { signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const hello = document.getElementById("hello");
+  const routineView = document.getElementById("routineView");
+
+  const bwForm = document.getElementById("bwForm");
+  const bwNotice = document.getElementById("bwNotice");
+
+  const workoutForm = document.getElementById("workoutForm");
+  const workoutNotice = document.getElementById("workoutNotice");
+  const workoutPreview = document.getElementById("workoutPreview");
+  const saveNotice = document.getElementById("saveNotice");
+
+  const todayISO = ()=> new Date().toISOString().slice(0,10);
+
+  document.getElementById("logout").addEventListener("click", async (e)=>{
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "login.html";
+  });
+
+  let tempExerciseName = "";
+  let tempSets = [];
+  let workoutExercises = [];
+
+  function renderWorkout(){
+    workoutNotice.textContent = `Ejercicios en este entreno: ${workoutExercises.length}`;
+    workoutPreview.innerHTML = workoutExercises.map((ex, i)=>`
+      <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+        <strong>${i+1}. ${ex.name}</strong>
+        <div class="small">${ex.sets.map((s,idx)=>`Set ${idx+1}: ${s.kg}kg x${s.reps} (RIR ${s.rir})`).join(" · ")}</div>
+      </div>
+    `).join("");
+  }
+
+  requireUser(async (user, profile)=>{
+    if(profile?.role === "coach"){
+      window.location.href = "coach.html";
+      return;
+    }
+
+    hello.textContent = `Hola ${profile?.name || ""} · ${profile?.premium ? "Premium ✅" : "Cuenta free ⚠️"}`;
+    workoutForm.date.value = todayISO();
+    bwForm.date.value = todayISO();
+
+    const routineId = profile?.routineId;
+    if(!routineId){
+      routineView.className="notice err";
+      routineView.textContent="❌ No tienes rutina asignada. Pide al coach un código.";
+    } else {
+      const rSnap = await getDoc(doc(db, "routines", routineId));
+      if(!rSnap.exists()){
+        routineView.className="notice err";
+        routineView.textContent="❌ Rutina no encontrada.";
+      } else {
+        const r = rSnap.data();
+        routineView.className="notice";
+        routineView.innerHTML = `
+          <div><strong>${r.name || routineId}</strong></div>
+          <div class="small">${r.description || ""}</div>
+          <div style="margin-top:10px;">
+            ${(r.days||[]).map(d=>`
+              <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+                <strong>${d.dayName}</strong>
+                <div class="small">
+                  ${(d.exercises||[]).map(ex=>`
+                    <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.08)">
+                      <strong>${ex.name}</strong>
+                      <div class="small">${ex.sets}x${ex.reps} · RIR ${ex.rir} · ${ex.rest}s</div>
+                      ${ex.videoUrl ? `<div class="small"><a href="${ex.videoUrl}" target="_blank">▶ Ver vídeo</a></div>` : ""}
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+    }
+
+    bwForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if(!profile?.premium){
+        bwNotice.className="notice err";
+        bwNotice.textContent="❌ Necesitas plan premium para registrar datos.";
+        return;
+      }
+      const date = bwForm.date.value;
+      const kg = Number(bwForm.kg.value);
+      await addDoc(collection(db, "users", user.uid, "bodyweight"), { date, kg, created_at: serverTimestamp() });
+      bwNotice.className="notice ok";
+      bwNotice.textContent="✅ Guardado.";
+      bwForm.reset();
+      bwForm.date.value = todayISO();
+    });
+
+    document.getElementById("btnAddSet").addEventListener("click", ()=>{
+      if(!profile?.premium){
+        saveNotice.className="notice err";
+        saveNotice.textContent="❌ Necesitas plan premium para registrar datos.";
+        return;
+      }
+      const name = document.getElementById("exName").value.trim();
+      const kg = Number(document.getElementById("setKg").value);
+      const reps = Number(document.getElementById("setReps").value);
+      const rir = Number(document.getElementById("setRir").value);
+
+      if(!name){ saveNotice.className="notice err"; saveNotice.textContent="❌ Pon nombre del ejercicio."; return; }
+      tempExerciseName = name;
+      tempSets.push({ kg, reps, rir });
+      saveNotice.className="notice ok";
+      saveNotice.textContent=`✅ Set añadido (${tempSets.length}).`;
+    });
+
+    document.getElementById("btnFinishExercise").addEventListener("click", ()=>{
+      if(!tempExerciseName || tempSets.length===0){
+        saveNotice.className="notice err";
+        saveNotice.textContent="❌ Añade al menos 1 set.";
+        return;
+      }
+      workoutExercises.push({ name: tempExerciseName, sets: [...tempSets] });
+      tempExerciseName = "";
+      tempSets = [];
+      document.getElementById("exName").value = "";
+      renderWorkout();
+      saveNotice.className="notice ok";
+      saveNotice.textContent="✅ Ejercicio añadido al entreno.";
+    });
+
+    workoutForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if(!profile?.premium){
+        saveNotice.className="notice err";
+        saveNotice.textContent="❌ Necesitas plan premium para registrar datos.";
+        return;
+      }
+      if(workoutExercises.length===0){
+        saveNotice.className="notice err";
+        saveNotice.textContent="❌ Añade al menos 1 ejercicio.";
+        return;
+      }
+
+      const date = workoutForm.date.value;
+      const dayName = workoutForm.dayName.value.trim();
+
+      const wDoc = await addDoc(collection(db, "users", user.uid, "workouts"), {
+        date, dayName, created_at: serverTimestamp()
+      });
+
+      const exRef = collection(db, "users", user.uid, "workouts", wDoc.id, "exercises");
+      for(const ex of workoutExercises){
+        await addDoc(exRef, { ...ex, created_at: serverTimestamp() });
+      }
+
+      workoutExercises = [];
+      renderWorkout();
+      saveNotice.className="notice ok";
+      saveNotice.textContent="✅ Entreno guardado.";
+    });
+  });
+</script>
+</body>
+</html>

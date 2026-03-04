@@ -8,123 +8,127 @@
   <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
 </head>
 <body>
-  <header class="nav">
-    <div class="container nav-inner">
-      <a class="brand" href="index.html">
-        <span class="logo" aria-hidden="true"></span>
-        <span>Otaku Fit</span>
-      </a>
-      <nav class="nav-links">
-        <a class="chip" href="index.html">Inicio</a>
-        <a class="chip" href="dashboard.html">Mi progreso</a>
-      </nav>
-    </div>
-  </header>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="logo" aria-hidden="true"></span><span>Otaku Fit</span></a>
+    <nav class="nav-links">
+      <a class="chip" href="index.html">Inicio</a>
+      <a class="chip" href="dashboard.html">Dashboard</a>
+    </nav>
+  </div>
+</header>
 
-  <main class="container section">
-    <h2>Acceso</h2>
-    <p class="sub">Crea tu cuenta o entra para ver tu progreso.</p>
+<main class="container section">
+  <h2>Acceso</h2>
+  <p class="sub">Crea cuenta o inicia sesión. Si eres cliente, introduce el código de invitación del coach.</p>
 
-    <div class="card pad">
-      <form id="authForm" class="form">
-        <div>
-          <label>Nombre (para tu perfil) *</label>
-          <input name="name" required placeholder="Ej. Pablo" />
-        </div>
+  <div class="card pad">
+    <form id="authForm" class="form">
+      <div>
+        <label>Nombre</label>
+        <input name="name" required />
+      </div>
 
-        <div>
-          <label>Email *</label>
-          <input name="email" type="email" required />
-        </div>
+      <div>
+        <label>Email</label>
+        <input name="email" type="email" required />
+      </div>
 
-        <div>
-          <label>Contraseña *</label>
-          <input name="password" type="password" required minlength="6" />
-          <div class="small">Mínimo 6 caracteres.</div>
-        </div>
+      <div>
+        <label>Contraseña</label>
+        <input name="password" type="password" minlength="6" required />
+      </div>
 
-        <div>
-          <label>Plan</label>
-          <select name="plan">
-            <option value="GENIN">Genin</option>
-            <option value="CHUNIN">Chunin</option>
-            <option value="JONIN">Jonin</option>
-          </select>
-        </div>
+      <div>
+        <label>Código invitación (si eres cliente)</label>
+        <input name="inviteCode" placeholder="Ej: ABCD-1234" />
+        <div class="small">Sin código podrás entrar, pero quedarás sin rutina asignada.</div>
+      </div>
 
-        <div class="btn-row">
-          <button class="btn primary" type="button" id="btnRegister">Crear cuenta</button>
-          <button class="btn" type="submit" id="btnLogin">Entrar</button>
-        </div>
+      <div class="btn-row">
+        <button class="btn primary" type="button" id="btnRegister">Crear cuenta</button>
+        <button class="btn" type="submit">Entrar</button>
+      </div>
 
-        <div id="notice" class="notice">Introduce tus datos.</div>
-      </form>
-    </div>
-  </main>
+      <div id="notice" class="notice">—</div>
+    </form>
+  </div>
+</main>
 
-  <script type="module">
-    import { auth, db } from "./js/firebase.js";
-    import { createUserWithEmailAndPassword, signInWithEmailAndPassword }
-      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { doc, setDoc, serverTimestamp }
-      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+<script type="module">
+  import { auth, db } from "./js/firebase.js";
+  import { createUserWithEmailAndPassword, signInWithEmailAndPassword }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, updateDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    const form = document.getElementById("authForm");
-    const notice = document.getElementById("notice");
-    const btnRegister = document.getElementById("btnRegister");
+  const form = document.getElementById("authForm");
+  const notice = document.getElementById("notice");
+  const btnRegister = document.getElementById("btnRegister");
 
-    const setNotice = (type, text) => {
-      notice.className = "notice " + (type || "");
-      notice.textContent = text;
-    };
+  const setN = (type, txt) => {
+    notice.className = "notice " + (type || "");
+    notice.textContent = txt;
+  };
 
-    // LOGIN
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      setNotice("", "Entrando...");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setN("", "Entrando...");
+    try{
+      await signInWithEmailAndPassword(auth, form.email.value.trim(), form.password.value);
+      window.location.href = "dashboard.html";
+    }catch(err){
+      setN("err", "❌ " + (err?.message || "Error"));
+    }
+  });
 
-      const email = form.email.value.trim();
-      const password = form.password.value;
+  btnRegister.addEventListener("click", async () => {
+    setN("", "Creando cuenta...");
 
-      try{
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = "dashboard.html";
-      }catch(err){
-        setNotice("err", "❌ " + (err?.message || "Error de login"));
+    const name = form.name.value.trim();
+    const email = form.email.value.trim();
+    const pass = form.password.value;
+    const code = form.inviteCode.value.trim();
+
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+      const baseUser = {
+        role: "client",
+        name,
+        email,
+        premium: false,
+        createdAt: serverTimestamp()
+      };
+
+      if(code){
+        const invRef = doc(db, "invites", code);
+        const invSnap = await getDoc(invRef);
+
+        if(invSnap.exists()){
+          const inv = invSnap.data();
+          if((inv.email || "").toLowerCase() === email.toLowerCase() && inv.used !== true){
+            baseUser.coachId = inv.coachId || null;
+            baseUser.premium = inv.premium === true;
+            baseUser.routineId = inv.routineId || null;
+            baseUser.trainingPlanId = inv.trainingPlanId || null;
+            baseUser.dietPlanId = inv.dietPlanId || null;
+
+            await updateDoc(invRef, { used: true, usedAt: serverTimestamp(), usedBy: cred.user.uid });
+          } else {
+            setN("err", "❌ Código no válido para este email o ya usado.");
+          }
+        } else {
+          setN("err", "❌ Código de invitación no existe.");
+        }
       }
-    });
 
-    // REGISTER + CREATE USER PROFILE IN FIRESTORE
-    btnRegister.addEventListener("click", async () => {
-      setNotice("", "Creando cuenta...");
-
-      const name = form.name.value.trim();
-      const email = form.email.value.trim();
-      const password = form.password.value;
-      const plan = form.plan.value;
-
-      if(!name || !email || !password){
-        setNotice("err", "❌ Rellena nombre, email y contraseña.");
-        return;
-      }
-
-      try{
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Guardar perfil del usuario en Firestore: users/{uid}
-        await setDoc(doc(db, "users", cred.user.uid), {
-          name,
-          email,
-          plan,
-          created_at: serverTimestamp(),
-          updated_at: serverTimestamp()
-        });
-
-        window.location.href = "dashboard.html";
-      }catch(err){
-        setNotice("err", "❌ " + (err?.message || "Error al registrar"));
-      }
-    });
-  </script>
+      await setDoc(doc(db, "users", cred.user.uid), baseUser);
+      window.location.href = "dashboard.html";
+    }catch(err){
+      setN("err", "❌ " + (err?.message || "Error"));
+    }
+  });
+</script>
 </body>
 </html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Seed</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="container section">
+  <h2>Inicializar Firestore (Seed)</h2>
+  <p class="sub">Crea una rutina base routines/RUTINA_001 si no existe.</p>
+
+  <div class="card pad">
+    <button class="btn primary" id="btnSeed">Crear estructura inicial</button>
+    <div class="notice" id="log">—</div>
+  </div>
+
+  <p class="small" style="margin-top:12px;">Úsalo una vez y luego puedes borrar este archivo.</p>
+</main>
+
+<script type="module">
+  import { auth, db } from "./js/firebase.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const log = document.getElementById("log");
+  const btn = document.getElementById("btnSeed");
+
+  const setLog = (type, txt) => {
+    log.className = "notice " + (type || "");
+    log.textContent = txt;
+  };
+
+  let currentUser = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      setLog("err", "❌ Inicia sesión primero (login.html).");
+      btn.disabled = true;
+      return;
+    }
+    currentUser = user;
+    setLog("", "✅ Logueado. Pulsa el botón para inicializar.");
+  });
+
+  btn.addEventListener("click", async () => {
+    if(!currentUser){
+      setLog("err", "❌ No hay sesión.");
+      return;
+    }
+
+    const uref = doc(db, "users", currentUser.uid);
+    const usnap = await getDoc(uref);
+
+    if(!usnap.exists()){
+      setLog("err", "❌ No existe users/{uid}. Crea tu doc con role='coach' primero.");
+      return;
+    }
+
+    const data = usnap.data();
+    if(data.role !== "coach"){
+      setLog("err", "❌ Tu role no es 'coach'. Cambia users/{uid}.role a 'coach'.");
+      return;
+    }
+
+    const routineId = "RUTINA_001";
+    const rref = doc(db, "routines", routineId);
+    const rsnap = await getDoc(rref);
+
+    if(!rsnap.exists()){
+      setLog("", "Creando routines/RUTINA_001 ...");
+      await setDoc(rref, {
+        name: "Rutina Base 3 días (Full Body)",
+        description: "Plantilla inicial automática",
+        createdAt: serverTimestamp(),
+        days: [
+          { dayName: "Lunes", exercises: [
+            { name:"Sentadilla", sets:3, reps:8, rir:2, rest:120, targetKg:0, videoUrl:"" },
+            { name:"Press banca", sets:3, reps:8, rir:2, rest:120, targetKg:0, videoUrl:"" },
+            { name:"Remo", sets:3, reps:10, rir:2, rest:120, targetKg:0, videoUrl:"" }
+          ]},
+          { dayName: "Miércoles", exercises: [
+            { name:"Peso muerto rumano", sets:3, reps:8, rir:2, rest:150, targetKg:0, videoUrl:"" },
+            { name:"Press militar", sets:3, reps:10, rir:2, rest:120, targetKg:0, videoUrl:"" },
+            { name:"Jalón al pecho", sets:3, reps:10, rir:2, rest:120, targetKg:0, videoUrl:"" }
+          ]},
+          { dayName: "Viernes", exercises: [
+            { name:"Prensa", sets:3, reps:12, rir:2, rest:120, targetKg:0, videoUrl:"" },
+            { name:"Fondos", sets:3, reps:8, rir:1, rest:120, targetKg:0, videoUrl:"" },
+            { name:"Curl bíceps", sets:3, reps:12, rir:2, rest:90, targetKg:0, videoUrl:"" }
+          ]}
+        ]
+      });
+      setLog("ok", "✅ Rutina creada: routines/RUTINA_001");
+    } else {
+      setLog("ok", "✅ Ya existe routines/RUTINA_001 (no se ha tocado).");
+    }
+  });
+</script>
+</body>
+</html>

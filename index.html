@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
 </head>
-
 <body>
   <header class="nav">
     <div class="container nav-inner">
@@ -15,16 +14,9 @@
         <span class="logo" aria-hidden="true"></span>
         <span>Otaku Fit</span>
       </a>
-
       <nav class="nav-links">
         <a class="chip" href="servicios.html">Planes</a>
-        <a class="chip" href="clientes.html">Alta cliente</a>
-        <a class="chip" href="contacto.html">Dudas</a>
-        <a class="chip" href="privacidad.html">Privacidad</a>
-        <!-- NUEVO: botón entrar -->
-        <a class="chip" href="login.html" style="border-color: rgba(0,229,255,.45);">
-          Entrar
-        </a>
+        <a class="chip" href="login.html" style="border-color: rgba(0,229,255,.45);">Entrar</a>
       </nav>
     </div>
   </header>
@@ -33,65 +25,34 @@
     <div class="hero-grid">
       <section class="card pad">
         <div class="kicker">🔥 Power-up semanal · 🎧 Rutinas · 🥗 Nutrición</div>
-
-        <h1 class="h1">
-          Asesorías de gimnasio con
-          <span style="background:linear-gradient(135deg,var(--accent2),var(--accent3)); -webkit-background-clip:text; background-clip:text; color:transparent;">
-            vibe Anime
-          </span>.
-        </h1>
-
+        <h1 class="h1">Asesorías de gimnasio con <span style="background:linear-gradient(135deg,var(--accent2),var(--accent3)); -webkit-background-clip:text; background-clip:text; color:transparent;">vibe Anime</span>.</h1>
         <p class="sub">
-          Otaku Fit es un sistema de asesorías para entrenar mejor: rutina + seguimiento + hábitos.
-          Elige tu “rango” (Genin/Chunin/Jonin) y empieza hoy.
+          App para gestión de clientes de entrenamiento y nutrición online.
+          Si eres cliente, te dará un código el coach para registrarte.
         </p>
 
         <div class="btn-row">
-          <a class="btn primary" href="clientes.html">Unirme (alta cliente)</a>
+          <a class="btn primary" href="login.html">Entrar / Crear cuenta</a>
           <a class="btn" href="servicios.html">Ver planes</a>
-          <a class="btn ghost" href="contacto.html">Tengo dudas</a>
-          <!-- NUEVO: botón entrar -->
-          <a class="btn" href="login.html">Entrar</a>
         </div>
 
         <div class="badges">
           <div class="badge">🧠 Plan personalizado</div>
-          <div class="badge">📈 Progresión real</div>
-          <div class="badge">💬 Soporte por email</div>
-          <div class="badge">🗃️ Datos guardados en BD</div>
+          <div class="badge">📈 Seguimiento</div>
+          <div class="badge">🍽️ Nutrición</div>
+          <div class="badge">🏋️ Entrenos</div>
         </div>
 
         <hr class="sep" />
+        <p class="small">© 2026 Otaku Fit</p>
       </section>
 
       <aside class="card pad">
-        <h2 class="card-title">Tu “Build” de esta semana</h2>
-
-        <div class="card" style="padding:14px; border-radius:16px; background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.12);">
-          <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
-            <div>
-              <div class="kicker">Misión</div>
-              <div style="font-weight:900; font-size:18px;">Subir fuerza + constancia</div>
-              <div class="small" style="margin-top:6px;">Objetivo: 3–4 días/semana · 45–60 min</div>
-            </div>
-            <div class="kicker">XP +120</div>
-          </div>
-
-          <hr class="sep" />
-
-          <div class="small">Checklist:</div>
-          <ul class="clean">
-            <li>Sentadilla / Press / Remo</li>
-            <li>Progresión de cargas</li>
-            <li>Proteína + sueño</li>
-          </ul>
-        </div>
-
-        <div class="btn-row" style="margin-top:14px;">
-          <a class="btn" href="clientes.html">Crear ficha cliente</a>
-           <!-- NUEVO: botón entrar -->
-           <a class="btn primary" href="login.html">Entrar al panel</a>
-          <a class="btn primary" href="login.html">Entrar al panel</a>
+        <h2 class="card-title">Acceso rápido</h2>
+        <p class="sub" style="margin-bottom:12px;">Coach y cliente entran por el mismo login. El dashboard redirige según rol.</p>
+        <div class="btn-row">
+          <a class="btn primary" href="dashboard.html">Ir al Dashboard</a>
+          <a class="btn" href="login.html">Login</a>
         </div>
       </aside>
     </div>
@@ -99,8 +60,7 @@
 
   <footer class="footer">
     <div class="container">
-      <div><strong>Otaku Fit</strong> · Asesorías de gimnasio para nakamas.</div>
-      <div class="small">© 2026.</div>
+      <div><strong>Otaku Fit</strong> · Asesorías con estética anime (sin material con copyright).</div>
     </div>
   </footer>
 </body>

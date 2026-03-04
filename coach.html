@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Coach</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="logo" aria-hidden="true"></span><span>Otaku Fit</span></a>
+    <nav class="nav-links">
+      <a class="chip" href="coach.html">Coach</a>
+      <a class="chip" href="client.html">Vista cliente</a>
+      <a class="chip" href="#" id="logout">Salir</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container section">
+  <h2>Panel Coach</h2>
+  <p class="sub" id="who">Cargando...</p>
+
+  <section class="card pad">
+    <h3 class="card-title">Crear invitación de cliente</h3>
+    <p class="small">Genera un código y dáselo al cliente para registrarse.</p>
+
+    <form id="inviteForm" class="form">
+      <div>
+        <label>Email del cliente</label>
+        <input name="email" type="email" required placeholder="cliente@email.com" />
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:10px;">
+        <div><label>Rutina ID</label><input name="routineId" placeholder="RUTINA_001" /></div>
+        <div><label>TrainingPlan ID</label><input name="trainingPlanId" placeholder="TP_001 (opcional)" /></div>
+        <div><label>DietPlan ID</label><input name="dietPlanId" placeholder="DP_001 (opcional)" /></div>
+      </div>
+
+      <div class="inline">
+        <input type="checkbox" id="premium" />
+        <label for="premium">Premium (ha pagado)</label>
+      </div>
+
+      <button class="btn primary" type="submit">Generar código</button>
+      <div class="notice" id="inviteNotice">—</div>
+    </form>
+
+    <div class="notice" id="lastCode" style="margin-top:12px;">Código generado: —</div>
+  </section>
+
+  <div style="height:14px"></div>
+
+  <section class="card pad">
+    <h3 class="card-title">Mis clientes</h3>
+    <div id="clients" class="small">Cargando...</div>
+  </section>
+</main>
+
+<script type="module">
+  import { auth, db } from "./js/firebase.js";
+  import { requireUser } from "./js/appAuth.js";
+  import { signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, setDoc, collection, query, where, onSnapshot, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const who = document.getElementById("who");
+  const inviteForm = document.getElementById("inviteForm");
+  const inviteNotice = document.getElementById("inviteNotice");
+  const lastCode = document.getElementById("lastCode");
+  const clientsEl = document.getElementById("clients");
+
+  const setN = (type, txt) => {
+    inviteNotice.className = "notice " + (type || "");
+    inviteNotice.textContent = txt;
+  };
+
+  document.getElementById("logout").addEventListener("click", async (e)=>{
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "login.html";
+  });
+
+  function makeCode(){
+    const a = Math.random().toString(36).slice(2,6).toUpperCase();
+    const b = Math.floor(1000 + Math.random()*9000);
+    return `${a}-${b}`;
+  }
+
+  requireUser((user, profile) => {
+    if(!profile){
+      who.textContent = "❌ No existe tu perfil en users/{uid}.";
+      return;
+    }
+    if(profile.role !== "coach"){
+      window.location.href = "client.html";
+      return;
+    }
+
+    who.textContent = `Coach: ${profile.email || user.email || ""} · UID: ${user.uid}`;
+
+    const q = query(collection(db, "users"), where("coachId", "==", user.uid));
+    onSnapshot(q, (snap)=>{
+      if(snap.empty){
+        clientsEl.textContent = "Aún no tienes clientes.";
+        return;
+      }
+      clientsEl.innerHTML = snap.docs.map(d=>{
+        const c = d.data();
+        return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+          <strong>${c.name || "(sin nombre)"} · ${c.email}</strong>
+          <div class="small">premium: ${c.premium ? "sí" : "no"} · rutina: ${c.routineId || "—"}</div>
+          <div class="small">uid: ${d.id}</div>
+        </div>`;
+      }).join("");
+    });
+
+    inviteForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      setN("", "Creando invitación...");
+
+      const code = makeCode();
+      const email = inviteForm.email.value.trim();
+      const routineId = inviteForm.routineId.value.trim() || null;
+      const trainingPlanId = inviteForm.trainingPlanId.value.trim() || null;
+      const dietPlanId = inviteForm.dietPlanId.value.trim() || null;
+      const premium = document.getElementById("premium").checked;
+
+      await setDoc(doc(db, "invites", code), {
+        email,
+        coachId: user.uid,
+        premium,
+        routineId,
+        trainingPlanId,
+        dietPlanId,
+        used: false,
+        createdAt: serverTimestamp()
+      });
+
+      setN("ok", "✅ Invitación creada.");
+      lastCode.className = "notice ok";
+      lastCode.textContent = "Código generado: " + code;
+      inviteForm.reset();
+      document.getElementById("premium").checked = false;
+    });
+  });
+</script>
+</body>
+</html>
