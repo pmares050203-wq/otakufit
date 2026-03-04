@@ -26,12 +26,14 @@
     <h3 class="card-title">Mi rutina</h3>
     <div id="routineView" class="notice">Cargando rutina...</div>
   </section>
+
   <div style="height:14px"></div>
 
-<section class="card pad">
-  <h3 class="card-title">Mi dieta</h3>
-  <div id="dietView" class="notice">Cargando dieta...</div>
-</section>
+  <section class="card pad">
+    <h3 class="card-title">Mi dieta</h3>
+    <div id="dietView" class="notice">Cargando dieta...</div>
+  </section>
+
   <div style="height:14px"></div>
 
   <section class="card pad">
@@ -88,7 +90,8 @@
 
   const hello = document.getElementById("hello");
   const routineView = document.getElementById("routineView");
-const dietView = document.getElementById("dietView");
+  const dietView = document.getElementById("dietView");
+
   const bwForm = document.getElementById("bwForm");
   const bwNotice = document.getElementById("bwNotice");
 
@@ -129,6 +132,7 @@ const dietView = document.getElementById("dietView");
     workoutForm.date.value = todayISO();
     bwForm.date.value = todayISO();
 
+    // ===================== RUTINA =====================
     const routineId = profile?.routineId;
     if(!routineId){
       routineView.className="notice err";
@@ -140,32 +144,83 @@ const dietView = document.getElementById("dietView");
         routineView.textContent="❌ Rutina no encontrada.";
       } else {
         const r = rSnap.data();
-        routineView.className="notice";
         const days = Array.isArray(r.days) ? r.days : [];
-routineView.className="notice";
-routineView.innerHTML = `
-  <div><strong>${r.name || routineId}</strong></div>
-  <div class="small">${r.description || ""}</div>
-  <div style="margin-top:10px;">
-    ${days.map(d=>`
-      <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
-        <strong>${d.dayName || "Día"}</strong>
-        <div class="small">
-          ${(d.exercises||[]).map(ex=>`
-            <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.08)">
-              <strong>${ex.name}</strong>
-              <div class="small">${ex.sets ?? "?"}x${ex.reps ?? "?"} · RIR ${ex.rir ?? "?"} · ${ex.rest ?? "?"}s</div>
-              ${ex.videoUrl ? `<div class="small"><a href="${ex.videoUrl}" target="_blank">▶ Ver vídeo</a></div>` : ""}
-            </div>
-          `).join("") || "No hay ejercicios."}
-        </div>
-      </div>
-    `).join("")}
-  </div>
-`;
+
+        routineView.className="notice";
+        routineView.innerHTML = `
+          <div><strong>${r.name || routineId}</strong></div>
+          <div class="small">${r.description || ""}</div>
+
+          <div style="margin-top:10px;">
+            ${days.map(d=>`
+              <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+                <strong>${d.dayName || "Día"}</strong>
+                <div class="small" style="margin-top:6px;">
+                  ${(d.exercises||[]).map(ex=>`
+                    <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.08)">
+                      <strong>${ex.name}</strong>
+                      <div class="small">
+                        ${ex.sets ?? "?"}x${ex.reps ?? "?"} · RIR ${ex.rir ?? "?"} · ${ex.rest ?? "?"}s
+                      </div>
+                      ${ex.videoUrl ? `<div class="small"><a href="${ex.videoUrl}" target="_blank">▶ Ver vídeo</a></div>` : ""}
+                    </div>
+                  `).join("") || "No hay ejercicios."}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
       }
     }
 
+    // ===================== DIETA =====================
+    const dietPlanId = profile?.dietPlanId;
+
+    if(!dietPlanId){
+      dietView.className="notice err";
+      dietView.textContent="❌ No tienes dieta asignada. Contacta con el coach.";
+    } else {
+      const dSnap = await getDoc(doc(db, "dietPlans", dietPlanId));
+      if(!dSnap.exists()){
+        dietView.className="notice err";
+        dietView.textContent="❌ Dieta no encontrada (revisa el ID).";
+      } else {
+        const d = dSnap.data();
+        const target = d.target || {};
+        const days = Array.isArray(d.days) ? d.days : [];
+
+        dietView.className="notice";
+        dietView.innerHTML = `
+          <div><strong>${d.name || dietPlanId}</strong></div>
+          <div class="small">${d.description || ""}</div>
+
+          <div class="small" style="margin-top:10px;">
+            <strong>Objetivo diario:</strong>
+            ${target.kcal ?? "?"} kcal · P ${target.p ?? "?"}g · C ${target.c ?? "?"}g · F ${target.f ?? "?"}g
+          </div>
+
+          <div style="margin-top:10px;">
+            ${days.map(day=>`
+              <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+                <strong>${day.dayName || "Día"}</strong>
+                <div class="small">${day.notes || ""}</div>
+
+                <div class="small" style="margin-top:8px;">
+                  ${(day.meals||[]).map(m=>`
+                    <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.08)">
+                      <strong>${m.name}</strong>
+                      <div class="small">${m.notes || ""}</div>
+                    </div>
+                  `).join("") || "—"}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+    }
+
+    // ===================== PESO CORPORAL =====================
     bwForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
       if(!profile?.premium){
@@ -182,6 +237,7 @@ routineView.innerHTML = `
       bwForm.date.value = todayISO();
     });
 
+    // ===================== ENTRENOS =====================
     document.getElementById("btnAddSet").addEventListener("click", ()=>{
       if(!profile?.premium){
         saveNotice.className="notice err";
