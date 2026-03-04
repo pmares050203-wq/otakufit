@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Panel</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="logo"></span><span>Otaku Fit</span></a>
+    <nav class="nav-links">
+      <a class="chip" href="dashboard.html">Panel</a>
+      <a class="chip" href="login.html">Login</a>
+      <a class="chip" href="#" id="logout">Salir</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container section">
+  <h2>Mi Panel</h2>
+  <p class="sub" id="hello">Cargando usuario...</p>
+
+  <div class="btn-row" style="margin-top:10px;">
+    <button class="btn primary" data-tab="tab-rutina">Rutina (Editor)</button>
+    <button class="btn" data-tab="tab-entreno">Entreno (Sets + PRs)</button>
+    <button class="btn" data-tab="tab-peso">Peso corporal</button>
+    <button class="btn" data-tab="tab-dieta">Dieta (Comidas)</button>
+  </div>
+
+  <div style="height:14px"></div>
+
+  <!-- ================= RUTINA (EDITOR) ================= -->
+  <section class="card pad" id="tab-rutina">
+    <h3 class="card-title">Rutina (Editor)</h3>
+    <p class="small">Crea rutinas, añade días y ejercicios. Marca una como “activa”.</p>
+
+    <div class="card pad" style="background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12);">
+      <h4 class="card-title" style="margin:0 0 10px;">Crear rutina</h4>
+      <form id="routineCreateForm" class="form" style="margin:0;">
+        <div>
+          <label>Nombre rutina</label>
+          <input name="name" placeholder="Rutina Volumen 4 días" required />
+        </div>
+        <button class="btn primary" type="submit">Crear</button>
+        <div class="notice" id="routineCreateNotice">Listo.</div>
+      </form>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="card pad">
+      <h4 class="card-title" style="margin:0 0 10px;">Mis rutinas</h4>
+      <div id="routineList" class="small">Cargando...</div>
+      <div class="notice" id="activeRoutineNotice" style="margin-top:12px;">Rutina activa: —</div>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="card pad">
+      <h4 class="card-title" style="margin:0 0 10px;">Editar rutina seleccionada</h4>
+      <div class="small" id="routineSelectedInfo">Selecciona una rutina arriba.</div>
+
+      <div class="card pad" style="margin-top:12px; background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12);">
+        <h4 class="card-title" style="margin:0 0 10px;">Añadir día</h4>
+        <form id="dayAddForm" class="form" style="margin:0;">
+          <div>
+            <label>Nombre del día</label>
+            <input name="dayName" placeholder="Día A (Push)" required />
+          </div>
+          <button class="btn" type="submit">Añadir día</button>
+          <div class="notice" id="dayAddNotice">—</div>
+        </form>
+      </div>
+
+      <div style="height:12px"></div>
+      <div id="dayList" class="small">—</div>
+    </div>
+  </section>
+
+  <!-- ================= ENTRENO (SETS + PRs) ================= -->
+  <section class="card pad" id="tab-entreno" style="display:none;">
+    <h3 class="card-title">Entreno (Sets + PRs)</h3>
+    <p class="small">Registra entrenos con sets reales. Se calculan PRs (máx kg) y e1RM estimado.</p>
+
+    <div class="card pad" style="background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12);">
+      <h4 class="card-title" style="margin:0 0 10px;">Nuevo entreno</h4>
+      <form id="workoutForm" class="form" style="margin:0;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label>Fecha</label>
+            <input name="date" type="date" required />
+          </div>
+          <div>
+            <label>Día (nombre)</label>
+            <input name="dayName" placeholder="Día A (Push)" required />
+          </div>
+        </div>
+        <div>
+          <label>Notas</label>
+          <input name="notes" placeholder="Ej. dormí mal, me noté fuerte..." />
+        </div>
+
+        <div class="card pad" style="background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12);">
+          <h4 class="card-title" style="margin:0 0 10px;">Añadir ejercicio + sets</h4>
+          <div class="form" style="margin:0;">
+            <div>
+              <label>Ejercicio</label>
+              <input id="exName" placeholder="Press banca" />
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:10px;">
+              <div><label>Kg</label><input id="setKg" type="number" step="0.5" value="60"></div>
+              <div><label>Reps</label><input id="setReps" type="number" step="1" value="8"></div>
+              <div><label>RIR</label><input id="setRir" type="number" step="0.5" value="2"></div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" type="button" id="btnAddSet">Añadir set</button>
+              <button class="btn" type="button" id="btnFinishExercise">Guardar ejercicio</button>
+            </div>
+
+            <div class="notice" id="setNotice">Añade sets y luego “Guardar ejercicio”.</div>
+          </div>
+        </div>
+
+        <div class="notice" id="workoutNotice">Ejercicios en este entreno: 0</div>
+        <div id="workoutExercisesPreview" class="small"></div>
+
+        <button class="btn primary" type="submit">Guardar entreno completo</button>
+      </form>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="grid3">
+      <div class="card pad">
+        <h4 class="card-title" style="margin:0 0 10px;">PRs (top)</h4>
+        <div id="prsList" class="small">Cargando...</div>
+      </div>
+
+      <div class="card pad" style="grid-column: span 2;">
+        <h4 class="card-title" style="margin:0 0 10px;">Historial por ejercicio</h4>
+        <div class="form" style="margin:0;">
+          <div>
+            <label>Busca ejercicio (nombre exacto recomendado)</label>
+            <input id="exHistoryName" placeholder="Press banca" />
+          </div>
+          <button class="btn" type="button" id="btnLoadExHistory">Ver historial</button>
+          <div id="exHistoryOut" class="small">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="card pad">
+      <h4 class="card-title" style="margin:0 0 10px;">Últimos entrenos</h4>
+      <div id="workoutHistory" class="small">Cargando...</div>
+    </div>
+  </section>
+
+  <!-- ================= PESO CORPORAL ================= -->
+  <section class="card pad" id="tab-peso" style="display:none;">
+    <h3 class="card-title">Peso corporal</h3>
+    <p class="small">Añade tu peso y verás el gráfico + media móvil (7 días).</p>
+
+    <form id="bwForm" class="form">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div>
+          <label>Fecha</label>
+          <input name="date" type="date" required />
+        </div>
+        <div>
+          <label>Peso (kg)</label>
+          <input name="kg" type="number" step="0.1" required />
+        </div>
+      </div>
+      <button class="btn primary" type="submit">Guardar</button>
+      <div class="notice" id="bwNotice">—</div>
+    </form>
+
+    <div style="height:14px"></div>
+    <canvas id="bwChart" height="120"></canvas>
+
+    <div style="height:14px"></div>
+    <h4 class="card-title" style="margin:0 0 10px;">Historial</h4>
+    <div id="bwList" class="small">Cargando...</div>
+  </section>
+
+  <!-- ================= DIETA (COMIDAS + ALIMENTOS) ================= -->
+  <section class="card pad" id="tab-dieta" style="display:none;">
+    <h3 class="card-title">Dieta (Comidas + Alimentos)</h3>
+    <p class="small">Registra comidas (desayuno/comida/cena/snack) con alimentos y macros.</p>
+
+    <div class="card pad" style="background: rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12);">
+      <h4 class="card-title" style="margin:0 0 10px;">Selecciona día</h4>
+      <form id="dietDayForm" class="form" style="margin:0;">
+        <div>
+          <label>Fecha</label>
+          <input name="date" type="date" required />
+        </div>
+        <button class="btn primary" type="submit">Abrir día</button>
+        <div class="notice" id="dietDayNotice">—</div>
+      </form>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="grid3">
+      <div class="card pad">
+        <h4 class="card-title" style="margin:0 0 10px;">Totales del día</h4>
+        <div id="dietTotals" class="notice">Selecciona un día.</div>
+      </div>
+
+      <div class="card pad" style="grid-column: span 2;">
+        <h4 class="card-title" style="margin:0 0 10px;">Añadir alimento</h4>
+        <form id="foodForm" class="form" style="margin:0;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+              <label>Comida</label>
+              <select name="meal">
+                <option value="desayuno">Desayuno</option>
+                <option value="comida">Comida</option>
+                <option value="cena">Cena</option>
+                <option value="snack">Snack</option>
+              </select>
+            </div>
+            <div>
+              <label>Nombre alimento</label>
+              <input name="name" placeholder="Arroz, pollo, yogur..." required />
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:10px;">
+            <div><label>Kcal</label><input name="kcal" type="number" min="0" required></div>
+            <div><label>Prote (g)</label><input name="p" type="number" min="0" required></div>
+            <div><label>Carbos (g)</label><input name="c" type="number" min="0" required></div>
+            <div><label>Grasa (g)</label><input name="f" type="number" min="0" required></div>
+          </div>
+
+          <button class="btn" type="submit">Añadir alimento</button>
+          <div class="notice" id="foodNotice">—</div>
+        </form>
+      </div>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="card pad">
+      <h4 class="card-title" style="margin:0 0 10px;">Comidas del día</h4>
+      <div id="dietMealsOut" class="small">—</div>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script type="module">
+  import { auth, db } from "./js/firebase.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    doc, setDoc, getDoc, updateDoc, deleteDoc,
+    collection, addDoc, getDocs,
+    query, where, orderBy, limit, onSnapshot,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  // ---------- helpers ----------
+  const $ = (id)=>document.getElementById(id);
+  const todayISO = ()=> new Date().toISOString().slice(0,10);
+
+  function avg7(arr){
+    // arr: numbers aligned with labels, return moving average (7)
+    const out=[];
+    for(let i=0;i<arr.length;i++){
+      let s=0, c=0;
+      for(let j=Math.max(0,i-6); j<=i; j++){ s+=arr[j]; c++; }
+      out.push(Number((s/c).toFixed(2)));
+    }
+    return out;
+  }
+
+  function e1rmEpley(kg, reps){
+    // simple estimate
+    if(!kg || !reps) return 0;
+    return kg * (1 + reps/30);
+  }
+
+  // ---------- Tabs ----------
+  const tabs = document.querySelectorAll("[data-tab]");
+  const sectionIds = ["tab-rutina","tab-entreno","tab-peso","tab-dieta"];
+  function showTab(id){
+    sectionIds.forEach(x => $(x).style.display = (x===id ? "block" : "none"));
+    tabs.forEach(b => b.classList.remove("primary"));
+    [...tabs].find(b=>b.dataset.tab===id)?.classList.add("primary");
+  }
+  tabs.forEach(btn=>btn.addEventListener("click", ()=>showTab(btn.dataset.tab)));
+
+  // ---------- Logout ----------
+  $("logout").addEventListener("click", async (e)=>{
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "login.html";
+  });
+
+  // ---------- Elements ----------
+  const hello = $("hello");
+
+  // Rutina
+  const routineCreateForm = $("routineCreateForm");
+  const routineCreateNotice = $("routineCreateNotice");
+  const routineList = $("routineList");
+  const activeRoutineNotice = $("activeRoutineNotice");
+  const routineSelectedInfo = $("routineSelectedInfo");
+  const dayAddForm = $("dayAddForm");
+  const dayAddNotice = $("dayAddNotice");
+  const dayList = $("dayList");
+
+  // Entreno
+  const workoutForm = $("workoutForm");
+  const setNotice = $("setNotice");
+  const workoutNotice = $("workoutNotice");
+  const workoutExercisesPreview = $("workoutExercisesPreview");
+  const prsList = $("prsList");
+  const workoutHistory = $("workoutHistory");
+  const exHistoryName = $("exHistoryName");
+  const btnLoadExHistory = $("btnLoadExHistory");
+  const exHistoryOut = $("exHistoryOut");
+
+  // Peso
+  const bwForm = $("bwForm");
+  const bwNotice = $("bwNotice");
+  const bwList = $("bwList");
+  const bwChartEl = $("bwChart");
+  let bwChart = null;
+
+  // Dieta
+  const dietDayForm = $("dietDayForm");
+  const dietDayNotice = $("dietDayNotice");
+  const dietTotals = $("dietTotals");
+  const foodForm = $("foodForm");
+  const foodNotice = $("foodNotice");
+  const dietMealsOut = $("dietMealsOut");
+
+  // ---------- State ----------
+  let uid = null;
+
+  // Rutina editor state
+  let selectedRoutineId = null;
+
+  // Entreno state
+  let tempExerciseName = "";
+  let tempSets = [];
+  let workoutExercises = []; // [{name, sets:[{kg,reps,rir}]}]
+
+  function renderWorkoutPreview(){
+    workoutNotice.textContent = `Ejercicios en este entreno: ${workoutExercises.length}`;
+    workoutExercisesPreview.innerHTML = workoutExercises.map((ex, i)=>`
+      <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+        <strong>${i+1}. ${ex.name}</strong>
+        <div class="small">
+          ${ex.sets.map((s,idx)=>`Set ${idx+1}: ${s.kg}kg x${s.reps} (RIR ${s.rir})`).join(" · ")}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // ---------- Auth gate ----------
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){
+      window.location.href = "login.html";
+      return;
+    }
+    uid = user.uid;
+    hello.textContent = `Bienvenido/a · ${user.email || ""}`;
+
+    // Defaults
+    workoutForm.date.value = todayISO();
+    bwForm.date.value = todayISO();
+    dietDayForm.date.value = todayISO();
+
+    // ================== RUTINA: list + active + edit ==================
+    const routinesRef = collection(db, "users", uid, "routines");
+    const activeRoutineRef = doc(db, "users", uid, "meta", "activeRoutine");
+
+    onSnapshot(activeRoutineRef, (snap)=>{
+      const rid = snap.exists() ? snap.data().routineId : null;
+      activeRoutineNotice.textContent = `Rutina activa: ${rid || "—"}`;
+    });
+
+    onSnapshot(query(routinesRef, orderBy("created_at","desc")), (snap)=>{
+      if(snap.empty){
+        routineList.textContent = "No tienes rutinas. Crea una arriba.";
+        return;
+      }
+      routineList.innerHTML = snap.docs.map(d=>{
+        const r = d.data();
+        return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+          <strong>${r.name}</strong>
+          <div class="small">${d.id}</div>
+          <div class="btn-row" style="margin-top:8px;">
+            <button class="btn" data-rsel="${d.id}">Editar</button>
+            <button class="btn primary" data-ract="${d.id}">Hacer activa</button>
+            <button class="btn" data-rdel="${d.id}" style="border-color: rgba(255,77,109,.45);">Borrar</button>
+          </div>
+        </div>`;
+      }).join("");
+
+      routineList.querySelectorAll("[data-rsel]").forEach(b=>{
+        b.addEventListener("click", ()=>selectRoutine(b.dataset.rsel));
+      });
+      routineList.querySelectorAll("[data-ract]").forEach(b=>{
+        b.addEventListener("click", async ()=>{
+          await setDoc(activeRoutineRef, { routineId: b.dataset.ract, updated_at: serverTimestamp() });
+        });
+      });
+      routineList.querySelectorAll("[data-rdel]").forEach(b=>{
+        b.addEventListener("click", async ()=>{
+          if(!confirm("¿Borrar rutina?")) return;
+          await deleteDoc(doc(db, "users", uid, "routines", b.dataset.rdel));
+          if(selectedRoutineId === b.dataset.rdel){
+            selectedRoutineId = null;
+            routineSelectedInfo.textContent = "Selecciona una rutina arriba.";
+            dayList.textContent = "—";
+          }
+        });
+      });
+    });
+
+    routineCreateForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      routineCreateNotice.className="notice";
+      routineCreateNotice.textContent="Creando...";
+      const name = routineCreateForm.name.value.trim();
+      if(!name){ routineCreateNotice.className="notice err"; routineCreateNotice.textContent="❌ Nombre requerido."; return; }
+      const docRef = await addDoc(routinesRef, { name, created_at: serverTimestamp() });
+      routineCreateForm.reset();
+      routineCreateNotice.className="notice ok";
+      routineCreateNotice.textContent=`✅ Rutina creada (${docRef.id}).`;
+    });
+
+    async function selectRoutine(routineId){
+      selectedRoutineId = routineId;
+      routineSelectedInfo.innerHTML = `<strong>Rutina seleccionada:</strong> ${routineId}`;
+      renderDaysLive();
+    }
+
+    function renderDaysLive(){
+      if(!selectedRoutineId) return;
+      const daysRef = collection(db, "users", uid, "routines", selectedRoutineId, "days");
+
+      onSnapshot(query(daysRef, orderBy("created_at","asc")), (snap)=>{
+        if(snap.empty){
+          dayList.textContent = "Aún no hay días. Añade uno arriba.";
+          return;
+        }
+        dayList.innerHTML = snap.docs.map(d=>{
+          const day = d.data();
+          const ex = day.exercises || [];
+          return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+            <strong>${day.dayName}</strong>
+            <div class="small">${ex.length} ejercicios</div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button class="btn" data-dayedit="${d.id}">Editar ejercicios</button>
+              <button class="btn" data-daydel="${d.id}" style="border-color: rgba(255,77,109,.45);">Borrar día</button>
+            </div>
+            <div id="dayedit-${d.id}" style="margin-top:10px; display:none;" class="card pad">
+              <h4 class="card-title" style="margin:0 0 8px;">Ejercicios de ${day.dayName}</h4>
+              <div class="small" style="margin-bottom:8px;">Formato: Nombre · series · reps · RIR · descanso(s)</div>
+
+              <form class="form" data-dayform="${d.id}" style="margin:0;">
+                <div>
+                  <label>Ejercicio</label>
+                  <input name="name" placeholder="Press banca" required />
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:10px;">
+                  <div><label>Series</label><input name="sets" type="number" min="1" value="3" required></div>
+                  <div><label>Reps</label><input name="reps" type="number" min="1" value="8" required></div>
+                  <div><label>RIR</label><input name="rir" type="number" step="0.5" value="2" required></div>
+                  <div><label>Descanso (s)</label><input name="rest" type="number" min="0" value="120" required></div>
+                </div>
+
+                <button class="btn" type="submit">Añadir</button>
+                <div class="notice" id="daynotice-${d.id}">—</div>
+              </form>
+
+              <div class="small" style="margin-top:10px;">
+                ${ex.map((x,idx)=>`
+                  <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.10)">
+                    <strong>${idx+1}. ${x.name}</strong>
+                    <div class="small">${x.sets}x${x.reps} · RIR ${x.rir} · ${x.rest}s</div>
+                    <button class="btn" data-exdel="${d.id}|${idx}" style="margin-top:6px;">Quitar</button>
+                  </div>
+                `).join("") || "No hay ejercicios aún."}
+              </div>
+            </div>
+          </div>`;
+        }).join("");
+
+        // edit toggle
+        dayList.querySelectorAll("[data-dayedit]").forEach(b=>{
+          b.addEventListener("click", ()=>{
+            const id = b.dataset.dayedit;
+            const box = $(`dayedit-${id}`);
+            box.style.display = (box.style.display==="none" ? "block" : "none");
+          });
+        });
+
+        // delete day
+        dayList.querySelectorAll("[data-daydel]").forEach(b=>{
+          b.addEventListener("click", async ()=>{
+            if(!confirm("¿Borrar día?")) return;
+            await deleteDoc(doc(db, "users", uid, "routines", selectedRoutineId, "days", b.dataset.daydel));
+          });
+        });
+
+        // add exercise to day
+        dayList.querySelectorAll("form[data-dayform]").forEach(form=>{
+          form.addEventListener("submit", async (e)=>{
+            e.preventDefault();
+            const dayId = form.dataset.dayform;
+            const notice = $(`daynotice-${dayId}`);
+
+            const name = form.name.value.trim();
+            const sets = Number(form.sets.value);
+            const reps = Number(form.reps.value);
+            const rir  = Number(form.rir.value);
+            const rest = Number(form.rest.value);
+
+            if(!name){ notice.className="notice err"; notice.textContent="❌ Nombre requerido."; return; }
+
+            // Load current doc, append, update
+            const dayRef = doc(db, "users", uid, "routines", selectedRoutineId, "days", dayId);
+            const snap = await getDoc(dayRef);
+            const data = snap.data() || {};
+            const ex = Array.isArray(data.exercises) ? data.exercises : [];
+            ex.push({ name, sets, reps, rir, rest });
+
+            await updateDoc(dayRef, { exercises: ex, updated_at: serverTimestamp() });
+            form.reset();
+            notice.className="notice ok";
+            notice.textContent="✅ Añadido.";
+          });
+        });
+
+        // remove exercise index
+        dayList.querySelectorAll("[data-exdel]").forEach(b=>{
+          b.addEventListener("click", async ()=>{
+            const [dayId, idxStr] = b.dataset.exdel.split("|");
+            const idx = Number(idxStr);
+
+            const dayRef = doc(db, "users", uid, "routines", selectedRoutineId, "days", dayId);
+            const snap = await getDoc(dayRef);
+            const data = snap.data() || {};
+            const ex = Array.isArray(data.exercises) ? data.exercises : [];
+            ex.splice(idx, 1);
+
+            await updateDoc(dayRef, { exercises: ex, updated_at: serverTimestamp() });
+          });
+        });
+      });
+    }
+
+    dayAddForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if(!selectedRoutineId){
+        dayAddNotice.className="notice err";
+        dayAddNotice.textContent="❌ Selecciona una rutina primero.";
+        return;
+      }
+      dayAddNotice.className="notice";
+      dayAddNotice.textContent="Añadiendo...";
+      const dayName = dayAddForm.dayName.value.trim();
+      if(!dayName){ dayAddNotice.className="notice err"; dayAddNotice.textContent="❌ Nombre requerido."; return; }
+
+      const daysRef = collection(db, "users", uid, "routines", selectedRoutineId, "days");
+      await addDoc(daysRef, { dayName, exercises: [], created_at: serverTimestamp() });
+      dayAddForm.reset();
+      dayAddNotice.className="notice ok";
+      dayAddNotice.textContent="✅ Día añadido.";
+    });
+
+    // ================== ENTRENO: sets + PRs + history ==================
+    const btnAddSet = $("btnAddSet");
+    const btnFinishExercise = $("btnFinishExercise");
+
+    btnAddSet.addEventListener("click", ()=>{
+      const name = $("exName").value.trim();
+      const kg   = Number($("setKg").value);
+      const reps = Number($("setReps").value);
+      const rir  = Number($("setRir").value);
+
+      if(!name){ setNotice.className="notice err"; setNotice.textContent="❌ Escribe el nombre del ejercicio."; return; }
+      if(kg<=0 || reps<=0){ setNotice.className="notice err"; setNotice.textContent="❌ Kg/Reps inválidos."; return; }
+
+      tempExerciseName = name;
+      tempSets.push({ kg, reps, rir });
+
+      setNotice.className="notice ok";
+      setNotice.textContent = `✅ Set añadido (${tempSets.length}) para ${tempExerciseName}.`;
+    });
+
+    btnFinishExercise.addEventListener("click", ()=>{
+      if(!tempExerciseName || tempSets.length===0){
+        setNotice.className="notice err";
+        setNotice.textContent="❌ Añade al menos 1 set.";
+        return;
+      }
+      workoutExercises.push({ name: tempExerciseName, sets: [...tempSets] });
+      tempExerciseName = "";
+      tempSets = [];
+      $("exName").value = "";
+      setNotice.className="notice ok";
+      setNotice.textContent="✅ Ejercicio guardado en el entreno.";
+      renderWorkoutPreview();
+    });
+
+    const workoutsRef = collection(db, "users", uid, "workouts");
+
+    onSnapshot(query(workoutsRef, orderBy("date","desc"), limit(10)), (snap)=>{
+      if(snap.empty){ workoutHistory.textContent="Aún no hay entrenos."; return; }
+      workoutHistory.innerHTML = snap.docs.map(d=>{
+        const w = d.data();
+        return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+          <strong>${w.date} · ${w.dayName}</strong>
+          <div class="small">${w.notes || ""}</div>
+        </div>`;
+      }).join("");
+    });
+
+    // PR list (top 10 by updated_at)
+    const prsRef = collection(db, "users", uid, "prs");
+    onSnapshot(query(prsRef, orderBy("updated_at","desc"), limit(10)), (snap)=>{
+      if(snap.empty){ prsList.textContent="Aún no hay PRs."; return; }
+      prsList.innerHTML = snap.docs.map(d=>{
+        const p = d.data();
+        return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+          <strong>${p.exercise}</strong>
+          <div class="small">PR: ${p.maxKg} kg · e1RM: ${Number(p.e1rm||0).toFixed(1)} · ${p.date || ""}</div>
+        </div>`;
+      }).join("");
+    });
+
+    workoutForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+
+      if(workoutExercises.length===0){
+        workoutNotice.className="notice err";
+        workoutNotice.textContent="❌ Añade al menos 1 ejercicio (Guardar ejercicio).";
+        return;
+      }
+
+      workoutNotice.className="notice";
+      workoutNotice.textContent="Guardando entreno...";
+
+      const date = workoutForm.date.value;
+      const dayName = workoutForm.dayName.value.trim();
+      const notes = workoutForm.notes.value.trim();
+
+      // create workout doc
+      const wDoc = await addDoc(workoutsRef, {
+        date, dayName, notes: notes||null,
+        created_at: serverTimestamp()
+      });
+
+      // save exercises with sets[]
+      const exRef = collection(db, "users", uid, "workouts", wDoc.id, "exercises");
+
+      for(const ex of workoutExercises){
+        await addDoc(exRef, {
+          name: ex.name,
+          sets: ex.sets,
+          created_at: serverTimestamp()
+        });
+
+        // update PR doc for this exercise
+        let maxKg = 0;
+        let bestE1 = 0;
+        let bestReps = 0;
+
+        for(const s of ex.sets){
+          if(s.kg > maxKg) maxKg = s.kg;
+          const e1 = e1rmEpley(s.kg, s.reps);
+          if(e1 > bestE1){ bestE1 = e1; bestReps = s.reps; }
+        }
+
+        // PR document id normalized: lower + trim
+        const prId = ex.name.trim().toLowerCase();
+        const prDocRef = doc(db, "users", uid, "prs", prId);
+        const prSnap = await getDoc(prDocRef);
+
+        const prev = prSnap.exists() ? prSnap.data() : null;
+        const prevMax = prev?.maxKg ?? 0;
+        const prevE1  = prev?.e1rm ?? 0;
+
+        // if improved, update; if not, still ensure exists
+        const newData = {
+          exercise: ex.name,
+          maxKg: Math.max(prevMax, maxKg),
+          e1rm: Math.max(prevE1, bestE1),
+          bestReps: (bestE1 >= prevE1 ? bestReps : (prev?.bestReps ?? null)),
+          date: (maxKg > prevMax || bestE1 > prevE1) ? date : (prev?.date ?? date),
+          updated_at: serverTimestamp()
+        };
+
+        await setDoc(prDocRef, newData, { merge: true });
+      }
+
+      // reset
+      workoutExercises = [];
+      renderWorkoutPreview();
+      workoutForm.reset();
+      workoutForm.date.value = todayISO();
+
+      workoutNotice.className="notice ok";
+      workoutNotice.textContent="✅ Entreno guardado + PRs actualizados.";
+    });
+
+    // Exercise history: search across workouts' exercises (simple approach)
+    btnLoadExHistory.addEventListener("click", async ()=>{
+      const target = exHistoryName.value.trim();
+      if(!target){ exHistoryOut.textContent="❌ Escribe un ejercicio."; return; }
+      exHistoryOut.textContent="Buscando...";
+
+      // Get last N workouts and aggregate sets for that exercise
+      const wSnap = await getDocs(query(workoutsRef, orderBy("date","desc"), limit(25)));
+      let rows = [];
+
+      for(const wDoc of wSnap.docs){
+        const w = wDoc.data();
+        const eSnap = await getDocs(collection(db, "users", uid, "workouts", wDoc.id, "exercises"));
+        eSnap.forEach(ed=>{
+          const ex = ed.data();
+          if((ex.name || "").toLowerCase() === target.toLowerCase()){
+            const sets = ex.sets || [];
+            sets.forEach((s, idx)=>{
+              rows.push({ date: w.date, set: idx+1, kg: s.kg, reps: s.reps, rir: s.rir, e1: e1rmEpley(s.kg, s.reps) });
+            });
+          }
+        });
+      }
+
+      if(rows.length===0){
+        exHistoryOut.textContent = "No hay datos para ese ejercicio (o no coincide el nombre).";
+        return;
+      }
+
+      // Sort by date asc
+      rows.sort((a,b)=> (a.date < b.date ? -1 : 1));
+      const best = rows.reduce((m,r)=> Math.max(m, r.kg), 0);
+      const bestE1 = rows.reduce((m,r)=> Math.max(m, r.e1), 0);
+
+      exHistoryOut.innerHTML = `
+        <div class="notice ok">✅ Sets encontrados: ${rows.length} · PR kg: ${best} · PR e1RM: ${bestE1.toFixed(1)}</div>
+        ${rows.map(r=>`
+          <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+            <strong>${r.date}</strong> · Set ${r.set}: ${r.kg}kg x${r.reps} (RIR ${r.rir}) · e1RM ${r.e1.toFixed(1)}
+          </div>
+        `).join("")}
+      `;
+    });
+
+    // ================== PESO: chart + avg7 ==================
+    const bwRef = collection(db, "users", uid, "bodyweight");
+    onSnapshot(query(bwRef, orderBy("date","asc")), (snap)=>{
+      if(snap.empty){
+        bwNotice.className="notice";
+        bwNotice.textContent="Aún no hay registros.";
+        bwList.textContent="—";
+        if(bwChart){ bwChart.destroy(); bwChart=null; }
+        return;
+      }
+      const labels=[], values=[];
+      bwList.innerHTML = snap.docs.map(d=>{
+        const x=d.data();
+        labels.push(x.date);
+        values.push(Number(x.kg));
+        return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+          <strong>${x.date}</strong> · ${x.kg} kg
+        </div>`;
+      }).join("");
+
+      const ma = avg7(values);
+
+      bwNotice.className="notice ok";
+      bwNotice.textContent=`✅ Registros: ${snap.size}`;
+
+      if(bwChart) bwChart.destroy();
+      bwChart = new Chart(bwChartEl, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: "Peso (kg)", data: values, tension: 0.25 },
+            { label: "Media 7 días", data: ma, tension: 0.25 }
+          ]
+        },
+        options: { responsive:true, plugins:{legend:{display:true}} }
+      });
+    });
+
+    bwForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const date = bwForm.date.value;
+      const kg = Number(bwForm.kg.value);
+      if(!date || !kg){
+        bwNotice.className="notice err";
+        bwNotice.textContent="❌ Fecha y peso obligatorios.";
+        return;
+      }
+      await addDoc(bwRef, { date, kg, created_at: serverTimestamp() });
+      bwForm.reset();
+      bwForm.date.value = todayISO();
+      bwNotice.className="notice ok";
+      bwNotice.textContent="✅ Peso guardado.";
+    });
+
+    // ================== DIETA: meals + foods + totals ==================
+    let selectedDietDate = null;
+
+    function totalsFromFoods(foods){
+      return foods.reduce((t,f)=>({
+        kcal: t.kcal + (Number(f.kcal)||0),
+        p: t.p + (Number(f.p)||0),
+        c: t.c + (Number(f.c)||0),
+        f: t.f + (Number(f.f)||0)
+      }), {kcal:0,p:0,c:0,f:0});
+    }
+
+    async function renderDietDay(){
+      if(!selectedDietDate){
+        dietMealsOut.textContent="—";
+        dietTotals.textContent="Selecciona un día.";
+        return;
+      }
+
+      // Meals fixed
+      const meals = ["desayuno","comida","cena","snack"];
+      let dayTotals = {kcal:0,p:0,c:0,f:0};
+
+      const out = [];
+      for(const meal of meals){
+        const foodsRef = collection(db, "users", uid, "dietDays", selectedDietDate, "meals", meal, "foods");
+        const snap = await getDocs(query(foodsRef, orderBy("created_at","asc")));
+
+        const foods = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        const mt = totalsFromFoods(foods);
+        dayTotals = {
+          kcal: dayTotals.kcal + mt.kcal,
+          p: dayTotals.p + mt.p,
+          c: dayTotals.c + mt.c,
+          f: dayTotals.f + mt.f
+        };
+
+        out.push(`
+          <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+            <strong>${meal.toUpperCase()}</strong>
+            <div class="small">Totales: ${mt.kcal} kcal · P ${mt.p} · C ${mt.c} · F ${mt.f}</div>
+            <div class="small" style="margin-top:6px;">
+              ${foods.map(f=>`
+                <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.10)">
+                  <strong>${f.name}</strong>
+                  <div class="small">${f.kcal} kcal · P ${f.p} · C ${f.c} · F ${f.f}</div>
+                  <button class="btn" data-fooddel="${meal}|${f.id}" style="margin-top:6px;">Quitar</button>
+                </div>
+              `).join("") || "—"}
+            </div>
+          </div>
+        `);
+      }
+
+      // Save totals on day doc for convenience
+      await setDoc(doc(db, "users", uid, "dietDays", selectedDietDate), {
+        date: selectedDietDate,
+        totals: dayTotals,
+        updated_at: serverTimestamp()
+      }, { merge: true });
+
+      dietTotals.className = "notice ok";
+      dietTotals.innerHTML = `
+        <strong>${selectedDietDate}</strong><br/>
+        ${dayTotals.kcal} kcal · P ${dayTotals.p} · C ${dayTotals.c} · F ${dayTotals.f}
+      `;
+      dietMealsOut.innerHTML = out.join("");
+
+      // bind delete buttons
+      dietMealsOut.querySelectorAll("[data-fooddel]").forEach(b=>{
+        b.addEventListener("click", async ()=>{
+          const [meal, foodId] = b.dataset.fooddel.split("|");
+          await deleteDoc(doc(db, "users", uid, "dietDays", selectedDietDate, "meals", meal, "foods", foodId));
+          await renderDietDay();
+        });
+      });
+    }
+
+    dietDayForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const date = dietDayForm.date.value;
+      if(!date){
+        dietDayNotice.className="notice err";
+        dietDayNotice.textContent="❌ Fecha requerida.";
+        return;
+      }
+      selectedDietDate = date;
+      dietDayNotice.className="notice ok";
+      dietDayNotice.textContent = `✅ Día abierto: ${selectedDietDate}`;
+      await renderDietDay();
+    });
+
+    foodForm.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if(!selectedDietDate){
+        foodNotice.className="notice err";
+        foodNotice.textContent="❌ Selecciona un día primero.";
+        return;
+      }
+      const meal = foodForm.meal.value;
+      const name = foodForm.name.value.trim();
+      const kcal = Number(foodForm.kcal.value);
+      const p = Number(foodForm.p.value);
+      const c = Number(foodForm.c.value);
+      const f = Number(foodForm.f.value);
+
+      if(!name){
+        foodNotice.className="notice err";
+        foodNotice.textContent="❌ Nombre requerido.";
+        return;
+      }
+
+      const foodsRef = collection(db, "users", uid, "dietDays", selectedDietDate, "meals", meal, "foods");
+      await addDoc(foodsRef, { name, kcal, p, c, f, created_at: serverTimestamp() });
+
+      foodForm.reset();
+      foodNotice.className="notice ok";
+      foodNotice.textContent="✅ Alimento añadido.";
+      await renderDietDay();
+    });
+
+    // Open today by default (optional)
+    selectedDietDate = todayISO();
+    dietDayForm.date.value = selectedDietDate;
+    dietDayNotice.className="notice";
+    dietDayNotice.textContent = `Día actual seleccionado: ${selectedDietDate} (pulsa “Abrir día”)`;
+
+  });
+</script>
+</body>
+</html>

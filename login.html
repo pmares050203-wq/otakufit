@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html">
+        <span class="logo" aria-hidden="true"></span>
+        <span>Otaku Fit</span>
+      </a>
+      <nav class="nav-links">
+        <a class="chip" href="index.html">Inicio</a>
+        <a class="chip" href="dashboard.html">Mi progreso</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container section">
+    <h2>Acceso</h2>
+    <p class="sub">Crea tu cuenta o entra para ver tu progreso.</p>
+
+    <div class="card pad">
+      <form id="authForm" class="form">
+        <div>
+          <label>Nombre (para tu perfil) *</label>
+          <input name="name" required placeholder="Ej. Pablo" />
+        </div>
+
+        <div>
+          <label>Email *</label>
+          <input name="email" type="email" required />
+        </div>
+
+        <div>
+          <label>Contraseña *</label>
+          <input name="password" type="password" required minlength="6" />
+          <div class="small">Mínimo 6 caracteres.</div>
+        </div>
+
+        <div>
+          <label>Plan</label>
+          <select name="plan">
+            <option value="GENIN">Genin</option>
+            <option value="CHUNIN">Chunin</option>
+            <option value="JONIN">Jonin</option>
+          </select>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" type="button" id="btnRegister">Crear cuenta</button>
+          <button class="btn" type="submit" id="btnLogin">Entrar</button>
+        </div>
+
+        <div id="notice" class="notice">Introduce tus datos.</div>
+      </form>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./js/firebase.js";
+    import { createUserWithEmailAndPassword, signInWithEmailAndPassword }
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const form = document.getElementById("authForm");
+    const notice = document.getElementById("notice");
+    const btnRegister = document.getElementById("btnRegister");
+
+    const setNotice = (type, text) => {
+      notice.className = "notice " + (type || "");
+      notice.textContent = text;
+    };
+
+    // LOGIN
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setNotice("", "Entrando...");
+
+      const email = form.email.value.trim();
+      const password = form.password.value;
+
+      try{
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = "dashboard.html";
+      }catch(err){
+        setNotice("err", "❌ " + (err?.message || "Error de login"));
+      }
+    });
+
+    // REGISTER + CREATE USER PROFILE IN FIRESTORE
+    btnRegister.addEventListener("click", async () => {
+      setNotice("", "Creando cuenta...");
+
+      const name = form.name.value.trim();
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      const plan = form.plan.value;
+
+      if(!name || !email || !password){
+        setNotice("err", "❌ Rellena nombre, email y contraseña.");
+        return;
+      }
+
+      try{
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+        // Guardar perfil del usuario en Firestore: users/{uid}
+        await setDoc(doc(db, "users", cred.user.uid), {
+          name,
+          email,
+          plan,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp()
+        });
+
+        window.location.href = "dashboard.html";
+      }catch(err){
+        setNotice("err", "❌ " + (err?.message || "Error al registrar"));
+      }
+    });
+  </script>
+</body>
+</html>
