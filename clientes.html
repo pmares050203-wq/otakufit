@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Alta cliente</title>
+  
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+  
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html">
+        <span class="logo" aria-hidden="true"></span>
+        <span>Otaku Fit</span>
+      </a>
+      <nav class="nav-links">
+        <a class="chip" href="servicios.html">Planes</a>
+        <a class="chip" href="clientes.html">Alta cliente</a>
+        <a class="chip" href="contacto.html">Dudas</a>
+        <a class="chip" href="privacidad.html">Privacidad</a>
+      </nav>
+    </div>
+  </header>
+
+  
+<main class="container section">
+  <h2>Alta de cliente</h2>
+  <p>Esto guardará el registro en la base de datos MySQL.</p>
+
+  <div style="height:14px"></div>
+  <div class="card pad">
+    <form id="clientForm" class="form" action="#" method="POST">
+      <div>
+        <label>Nombre y apellidos *</label>
+        <input name="full_name" required placeholder="Ej. Ichigo Kurosaki (modo demo)" />
+      </div>
+
+      <div>
+        <label>Email *</label>
+        <input name="email" type="email" required placeholder="tu@email.com" />
+      </div>
+
+      <div>
+        <label>Teléfono (opcional)</label>
+        <input name="phone" placeholder="+34..." />
+      </div>
+
+      <div>
+        <label>Plan</label>
+        <select name="plan">
+          <option value="GENIN">Genin</option>
+          <option value="CHUNIN">Chunin</option>
+          <option value="JONIN">Jonin</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Objetivo (opcional)</label>
+        <input name="goal" placeholder="Ej. recomposición corporal, fuerza, resistencia..." />
+      </div>
+
+      <div class="inline">
+        <input id="consent" type="checkbox" required />
+        <label for="consent">Acepto la <a href="privacidad.html">política de privacidad</a> *</label>
+      </div>
+
+      <button class="btn primary" type="submit">Guardar en BD</button>
+      <div id="clientNotice" class="notice">Rellena el formulario y envía.</div>
+    </form>
+    <p class="small" style="margin-top:12px;">
+      Si al enviar ves error 404/405 o “no se pudo conectar”, normalmente es porque el hosting no tiene PHP habilitado
+      o la ruta <code>api/</code> no está donde toca.
+    </p>
+  </div>
+</main>
+
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+ const firebaseConfig = {
+  apiKey: "AIzaSyCmDaIoEZex91CS93x0iEMgrA-Ka7iO0LQ",
+  authDomain: "otakufit-a8a84.firebaseapp.com",
+  projectId: "otakufit-a8a84",
+  storageBucket: "otakufit-a8a84.firebasestorage.app",
+  messagingSenderId: "862712022885",
+  appId: "1:862712022885:web:bf237f6620c41223e3438c",
+  measurementId: "G-WEBPLWZNTW"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const form = document.getElementById('clientForm');
+  const notice = document.getElementById('clientNotice');
+
+  function setNotice(type, text){
+    notice.className = 'notice ' + (type || '');
+    notice.textContent = text;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setNotice('', 'Enviando...');
+
+    const payload = {
+      full_name: form.full_name.value.trim(),
+      email: form.email.value.trim(),
+      phone: form.phone.value.trim() || null,
+      goal: form.goal.value.trim() || null,
+      plan: form.plan.value,
+      created_at: serverTimestamp()
+    };
+
+    if(!payload.full_name || !payload.email){
+      setNotice('err', '❌ Nombre y email obligatorios.');
+      return;
+    }
+
+    try{
+      await addDoc(collection(db, "clients"), payload);
+      form.reset();
+      setNotice('ok', '✅ Guardado en la base de datos (Firestore).');
+    }catch(err){
+      setNotice('err', '❌ Error: ' + (err?.message || 'desconocido'));
+    }
+  });
+</script>
+
+</html>

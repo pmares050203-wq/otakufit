@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Otaku Fit · Contacto</title>
+  
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+  
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html">
+        <span class="logo" aria-hidden="true"></span>
+        <span>Otaku Fit</span>
+      </a>
+      <nav class="nav-links">
+        <a class="chip" href="servicios.html">Planes</a>
+        <a class="chip" href="clientes.html">Alta cliente</a>
+        <a class="chip" href="contacto.html">Dudas</a>
+        <a class="chip" href="privacidad.html">Privacidad</a>
+      </nav>
+    </div>
+  </header>
+
+  
+<main class="container section">
+  <h2>Contacto (dudas)</h2>
+  <p>Te llegará un correo. Opcionalmente, también se guarda el mensaje en la base de datos.</p>
+
+  <div style="height:14px"></div>
+  <div class="card pad">
+    
+<form name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" action="thanks.html" class="form">
+  <input type="hidden" name="form-name" value="contact" />
+  <p style="display:none;">
+    <label>Si eres humano deja esto vacío: <input name="bot-field" /></label>
+  </p>
+
+  <div>
+    <label>Nombre *</label>
+    <input name="name" required placeholder="Tu nombre" />
+  </div>
+
+  <div>
+    <label>Email *</label>
+    <input name="email" type="email" required placeholder="tu@email.com" />
+  </div>
+
+  <div>
+    <label>Asunto *</label>
+    <input name="subject" required placeholder="Ej. Plan para volumen..." />
+  </div>
+
+  <div>
+    <label>Mensaje *</label>
+    <textarea name="message" required placeholder="Escribe tu duda..."></textarea>
+  </div>
+
+  <div class="inline">
+    <input id="consent2" type="checkbox" required />
+    <label for="consent2">Acepto la <a href="privacidad.html">política de privacidad</a> *</label>
+  </div>
+
+  <button class="btn primary" type="submit">Enviar duda</button>
+</form>
+  </div>
+</main>
+
+<script src="js/main.js"></script>
+<script>
+  const f = document.getElementById('contactForm');
+  const n = document.getElementById('contactNotice');
+  f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    postForm('api/contact.php', f, n);
+  });
+</script>
+
+
+  <footer class="footer">
+    <div class="container">
+      <div><strong>Otaku Fit</strong> · Asesorías de gimnasio para nakamas.</div>
+      <div class="small">© 2026.</div>
+    </div>
+  </footer>
+</body>
+</html>
