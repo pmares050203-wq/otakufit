@@ -71,6 +71,7 @@
     notice.textContent = txt;
   };
 
+  // LOGIN normal (solo si ya existe cuenta)
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     setN("", "Entrando...");
@@ -82,6 +83,7 @@
     }
   });
 
+  // REGISTER SOLO CON CÓDIGO
   btnRegister.addEventListener("click", async () => {
     setN("", "Creando cuenta...");
 
@@ -90,43 +92,61 @@
     const pass = form.password.value;
     const code = form.inviteCode.value.trim();
 
+    if(!code){
+      setN("err", "❌ Necesitas un código del coach para registrarte.");
+      return;
+    }
+
+    // 1) Validar invitación ANTES de crear usuario
+    const invRef = doc(db, "invites", code);
+    const invSnap = await getDoc(invRef);
+
+    if(!invSnap.exists()){
+      setN("err", "❌ Código de invitación no existe.");
+      return;
+    }
+
+    const inv = invSnap.data();
+
+    if(inv.used === true){
+      setN("err", "❌ Este código ya fue usado.");
+      return;
+    }
+
+    if((inv.email || "").toLowerCase() !== email.toLowerCase()){
+      setN("err", "❌ Este código no corresponde a este email.");
+      return;
+    }
+
     try{
+      // 2) Crear Auth user
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
 
-      const baseUser = {
+      // 3) Crear perfil usuario en users/{uid} con lo del invite
+      const userDoc = {
         role: "client",
         name,
         email,
-        premium: false,
+        coachId: inv.coachId || null,
+        premium: inv.premium === true,
+        routineId: inv.routineId || null,
+        trainingPlanId: inv.trainingPlanId || null,
+        dietPlanId: inv.dietPlanId || null,
         createdAt: serverTimestamp()
       };
 
-      if(code){
-        const invRef = doc(db, "invites", code);
-        const invSnap = await getDoc(invRef);
+      await setDoc(doc(db, "users", cred.user.uid), userDoc);
 
-        if(invSnap.exists()){
-          const inv = invSnap.data();
-          if((inv.email || "").toLowerCase() === email.toLowerCase() && inv.used !== true){
-            baseUser.coachId = inv.coachId || null;
-            baseUser.premium = inv.premium === true;
-            baseUser.routineId = inv.routineId || null;
-            baseUser.trainingPlanId = inv.trainingPlanId || null;
-            baseUser.dietPlanId = inv.dietPlanId || null;
+      // 4) Marcar invite como usado
+      await updateDoc(invRef, {
+        used: true,
+        usedAt: serverTimestamp(),
+        usedBy: cred.user.uid
+      });
 
-            await updateDoc(invRef, { used: true, usedAt: serverTimestamp(), usedBy: cred.user.uid });
-          } else {
-            setN("err", "❌ Código no válido para este email o ya usado.");
-          }
-        } else {
-          setN("err", "❌ Código de invitación no existe.");
-        }
-      }
-
-      await setDoc(doc(db, "users", cred.user.uid), baseUser);
       window.location.href = "dashboard.html";
     }catch(err){
-      setN("err", "❌ " + (err?.message || "Error"));
+      setN("err", "❌ " + (err?.message || "Error al registrar"));
     }
   });
 </script>
