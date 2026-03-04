@@ -102,20 +102,25 @@
     who.textContent = `Coach: ${profile.email || user.email || ""} · UID: ${user.uid}`;
 
     const q = query(collection(db, "users"), where("coachId", "==", user.uid));
-    onSnapshot(q, (snap)=>{
-      if(snap.empty){
-        clientsEl.textContent = "Aún no tienes clientes.";
-        return;
-      }
-      clientsEl.innerHTML = snap.docs.map(d=>{
-        const c = d.data();
-        return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
-          <strong>${c.name || "(sin nombre)"} · ${c.email}</strong>
-          <div class="small">premium: ${c.premium ? "sí" : "no"} · rutina: ${c.routineId || "—"}</div>
-          <div class="small">uid: ${d.id}</div>
-        </div>`;
-      }).join("");
-    });
+    onSnapshot(q,
+  (snap) => {
+    if(snap.empty){
+      clientsEl.textContent = "No tienes clientes aún (coachId no asignado).";
+      return;
+    }
+    clientsEl.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      return `<div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+        <strong>${c.name || "(sin nombre)"} · ${c.email}</strong>
+        <div class="small">premium: ${c.premium ? "sí" : "no"} · rutina: ${c.routineId || "—"}</div>
+        <div class="small">uid: ${d.id}</div>
+      </div>`;
+    }).join("");
+  },
+  (err) => {
+    clientsEl.textContent = "❌ Error cargando clientes: " + (err?.message || err);
+  }
+);
 
     inviteForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
