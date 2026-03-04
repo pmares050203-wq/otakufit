@@ -87,18 +87,16 @@
     setN("", "Creando cuenta...");
 
     const name = form.name.value.trim();
-    const email = form.email.value.trim();
-    const pass = form.password.value;
     const code = form.inviteCode.value.trim();
 
-    if(!code){
-      setN("err", "❌ Necesitas un código del coach para registrarte.");
-      return;
-    }
     if(!name){
-      setN("err", "❌ Escribe tu nombre para registrarte.");
-      return;
+        setN("err", "❌ Escribe tu nombre para crear la cuenta.");
+    return;
     }
+    if(!code){
+        setN("err", "❌ Necesitas un código del coach para registrarte.");
+    return;
+  }
 
     // 1) Validar invitación ANTES de crear usuario
     const invRef = doc(db, "invites", code);
