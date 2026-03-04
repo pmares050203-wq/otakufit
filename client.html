@@ -88,7 +88,7 @@
 
   const hello = document.getElementById("hello");
   const routineView = document.getElementById("routineView");
-
+const dietView = document.getElementById("dietView");
   const bwForm = document.getElementById("bwForm");
   const bwNotice = document.getElementById("bwNotice");
 
@@ -141,26 +141,28 @@
       } else {
         const r = rSnap.data();
         routineView.className="notice";
-        routineView.innerHTML = `
-          <div><strong>${r.name || routineId}</strong></div>
-          <div class="small">${r.description || ""}</div>
-          <div style="margin-top:10px;">
-            ${(r.days||[]).map(d=>`
-              <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
-                <strong>${d.dayName}</strong>
-                <div class="small">
-                  ${(d.exercises||[]).map(ex=>`
-                    <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.08)">
-                      <strong>${ex.name}</strong>
-                      <div class="small">${ex.sets}x${ex.reps} · RIR ${ex.rir} · ${ex.rest}s</div>
-                      ${ex.videoUrl ? `<div class="small"><a href="${ex.videoUrl}" target="_blank">▶ Ver vídeo</a></div>` : ""}
-                    </div>
-                  `).join("")}
-                </div>
-              </div>
-            `).join("")}
-          </div>
-        `;
+        const days = Array.isArray(r.days) ? r.days : [];
+routineView.className="notice";
+routineView.innerHTML = `
+  <div><strong>${r.name || routineId}</strong></div>
+  <div class="small">${r.description || ""}</div>
+  <div style="margin-top:10px;">
+    ${days.map(d=>`
+      <div style="padding:10px 0; border-top:1px solid rgba(255,255,255,.10)">
+        <strong>${d.dayName || "Día"}</strong>
+        <div class="small">
+          ${(d.exercises||[]).map(ex=>`
+            <div style="padding:8px 0; border-top:1px solid rgba(255,255,255,.08)">
+              <strong>${ex.name}</strong>
+              <div class="small">${ex.sets ?? "?"}x${ex.reps ?? "?"} · RIR ${ex.rir ?? "?"} · ${ex.rest ?? "?"}s</div>
+              ${ex.videoUrl ? `<div class="small"><a href="${ex.videoUrl}" target="_blank">▶ Ver vídeo</a></div>` : ""}
+            </div>
+          `).join("") || "No hay ejercicios."}
+        </div>
+      </div>
+    `).join("")}
+  </div>
+`;
       }
     }
 
