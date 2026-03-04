@@ -95,6 +95,10 @@
       setN("err", "❌ Necesitas un código del coach para registrarte.");
       return;
     }
+    if(!name){
+      setN("err", "❌ Escribe tu nombre para registrarte.");
+      return;
+    }
 
     // 1) Validar invitación ANTES de crear usuario
     const invRef = doc(db, "invites", code);
